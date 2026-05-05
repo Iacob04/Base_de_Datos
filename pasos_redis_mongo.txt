@@ -1,0 +1,144 @@
+====================================================
+  PASOS REDIS + MONGODB - UT8 NoSQL
+====================================================
+
+====================================================
+  REDIS
+====================================================
+
+--- FASE 1: ENTORNO ---
+
+1. Levantar contenedores:
+   cd C:/Users/alexi/BasesDeDatos/Teoria/UT8_NoSQL/Recursos/Dockers/redis
+   docker compose up -d
+
+2. Conectar por terminal:
+   docker exec -it redis-server redis-cli
+
+3. Conectar por GUI (RedisInsight):
+   Abrir http://localhost:5540
+   -> "+ Connect existing database"
+   -> Host: redis | Port: 6379 | Sin password
+
+4. Ver ayuda en CLI:
+   HELP @string
+   HELP @hash
+
+--- FASE 2: TEORIA ORAL ---
+
+- Redis es ideal para alta concurrencia porque trabaja en memoria RAM
+  (microsegundos de latencia). Ideal para cache, colas y rankings.
+
+- Redis vs MySQL:
+  Redis -> en memoria, clave-valor, ultra rapido, sin relaciones
+  MySQL -> en disco, relacional, SQL, mas lento para lecturas masivas
+
+--- FASE 3: OPERACIONES PRACTICAS ---
+
+-- Insertar 3 tipos de datos --
+
+SET usuario:1:nombre "Alexis"
+
+HSET producto:1 nombre "Laptop" precio 999 stock 5
+
+RPUSH pedido:1:items "Mouse" "Teclado" "Monitor"
+
+SADD curso:1:alumnos "Alexis" "Maria" "Juan"
+
+-- Leer datos --
+
+GET usuario:1:nombre
+HGETALL producto:1
+LRANGE pedido:1:items 0 -1
+SMEMBERS curso:1:alumnos
+
+-- Expiracion --
+
+SET sesion:token:abc "activa"
+EXPIRE sesion:token:abc 60
+TTL sesion:token:abc        <- ejecutar varias veces para ver cuenta regresiva
+
+-- Ver datos en GUI --
+Abrir Browser en RedisInsight y verificar que aparecen todas las claves.
+
+--- FASE 4: CIERRE ---
+
+docker compose down
+
+
+====================================================
+  MONGODB
+====================================================
+
+--- FASE 1: ENTORNO ---
+
+1. Levantar contenedores:
+   cd C:/Users/alexi/BasesDeDatos/Teoria/UT8_NoSQL/Recursos/Dockers/mongodb
+   docker compose up -d
+
+2. Conectar por terminal:
+   docker exec -it mongodb-server mongosh
+
+3. Conectar por GUI (Mongo Express):
+   Abrir http://localhost:8081
+   Usuario: admin | Contrasena: pass
+
+4. Ver ayuda en mongosh:
+   help
+   db.help()
+
+--- FASE 2: TEORIA ORAL ---
+
+- MongoDB vs MySQL:
+  MongoDB guarda documentos JSON sin esquema fijo, cada documento
+  puede tener campos distintos. Ideal para catalogos donde cada
+  producto tiene atributos diferentes.
+
+- Agregacion vs tabla SQL:
+  aggregate es un pipeline (filtra, agrupa, calcula) similar a
+  SELECT+GROUP BY+JOIN pero sobre documentos JSON flexibles.
+  En SQL trabajas con tablas fijas; en MongoDB con colecciones flexibles.
+
+--- FASE 3: OPERACIONES PRACTICAS ---
+
+-- Seleccionar base de datos --
+use tienda
+
+-- Insertar documento con estructura anidada (arrays + subdocumentos) --
+db.experiencias.insertOne({
+  nombre: "Alexis",
+  edad: 20,
+  habilidades: ["MongoDB", "Redis", "MySQL"],
+  direccion: {
+    ciudad: "Madrid",
+    pais: "Espana"
+  },
+  activo: true
+})
+
+-- Consultas con operadores complejos --
+db.experiencias.find({ edad: { $gt: 18 } })
+db.experiencias.find({ habilidades: { $in: ["MongoDB", "Redis"] } })
+db.experiencias.find({ nombre: { $regex: "^Al", $options: "i" } })
+
+-- Proyeccion (limitar campos devueltos) --
+db.experiencias.find({}, { nombre: 1, habilidades: 1, _id: 0 })
+
+-- Actualizar sin sobrescribir --
+db.experiencias.updateOne(
+  { nombre: "Alexis" },
+  { $set: { edad: 21 } }
+)
+db.experiencias.updateOne(
+  { nombre: "Alexis" },
+  { $push: { habilidades: "Docker" } }
+)
+
+-- Eliminar documento --
+db.experiencias.deleteOne({ nombre: "Alexis" })
+
+--- CIERRE ---
+
+docker compose down
+
+====================================================
